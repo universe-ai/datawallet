@@ -1,0 +1,22 @@
+{
+    "extends": "@tsconfig/node12/tsconfig.json",
+    "compilerOptions": {
+        "allowJs": true,
+        "experimentalDecorators": true,
+        "preserveConstEnums": true,
+        "outDir": "build",
+        "module": "commonjs",
+        "target": "es2020",
+        "lib": [
+            "dom"
+        ]
+    },
+    "include": [
+        "./src/**/*.ts"
+    ],
+    "exclude": [
+        "./node_modules",
+        "./build",
+        "./dist"
+    ]
+}
