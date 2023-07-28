@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="RPC.js"> </script>
+  </head>
+<body>
+    <button type="button" id="authBtn" onclick="auth();return false">Auth</button>
+    <div id="extensionPoking" style="display: block; background-color: yellow;">
+        <h1>Please active the UniverseAI Data Wallet browser extension by clicking on the icon in your browser.</h1>
+    </div>
+    <script>
+        const RPC = module.RPC;
+        console.log("page index.html running", RPC);
+
+        const postMessage = (message) => {
+            window.postMessage({message, direction: "from-page-script"}, "*");
+        };
+
+        const listenMessage = (listener) => {
+            window.addEventListener("message", (event) => {
+                if (event.source === window && event?.data?.direction === "from-content-script") {
+                    listener(event.data.message);
+                }
+            });
+        };
+
+        const rpc = new RPC(postMessage, listenMessage);
+
+        document.getElementById("authBtn").disabled = true;
+        document.getElementById("extensionPoking").style.display = "block";
+
+        rpc.onCall("init", () => {
+            console.log("DataWallet activated");
+            document.getElementById("authBtn").disabled = false;
+            document.getElementById("extensionPoking").style.display = "none";
+        });
+
+        async function auth(e) {
+            const response = await rpc.call("auth", [{a: 1}]);
+
+            console.log("auth response", response);
+        }
+    </script>
+</body>
+</html>

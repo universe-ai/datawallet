@@ -1,0 +1,55 @@
+<popup-main>
+    <div id="mainContent">
+        <div if={state.tabsState}>
+            <div if={state.tabsState[props.tabId]?.activated}>
+                Tab is activated
+            </div>
+            <div if={!state.tabsState[props.tabId]?.activated}>
+                Tab has not been activated
+                <button onclick={activateTab}>Activate tab now</button>
+            </div>
+        </div?
+    </div>
+
+    <script>
+        import * as riot from "riot";
+
+        export default {
+            onBeforeMount(props, state) {
+                this.state = {
+                    tabsState: {},
+                };
+            },
+            async activateTab(e) {
+                e.preventDefault();
+
+                const tabsState = await this.props.rpc.call("activateTab", [this.props.tabId]);
+
+                if (tabsState) {
+                    this.update({
+                        tabsState,
+                    });
+                }
+                else {
+                    console.error("could not activate tab");
+                }
+            },
+        }
+    </script>
+    <style>
+        popup-main {
+            display: block;
+            min-width: 150;
+            min-height: 200px;
+        };
+
+        #mainContent {
+            display: block;
+            float: left;
+            margin-left: 10px;
+        }
+        .non-visible {
+            visibility: hidden;
+        }
+    </style>
+</popup-main>
