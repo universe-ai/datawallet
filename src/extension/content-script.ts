@@ -21,24 +21,21 @@ const browser2 = typeof(browser) !== "undefined" ? browser : chrome;
 
     const port = browser2.runtime.connect({name: "from-content-script"});
 
-    const postMessage = (message: any) => {
+    const postMessageToBg = (message: any) => {
         port.postMessage(message);
     };
 
-    const listenMessage = (listener: Function) => {
+    const listenMessageFromBg = (listener: Function) => {
         port.onMessage.addListener( (message: any) => {
             listener(message);
         });
     };
 
-    const backgroundScriptRPC = new RPC(postMessage, listenMessage);
-
-
-    const postMessage2 = (message: any) => {
+    const postMessageToPage = (message: any) => {
         window.postMessage({message, direction: "from-content-script"}, "*");
     };
 
-    const listenMessage2 = (listener: Function) => {
+    const listenMessageFromPage = (listener: Function) => {
         window.addEventListener("message", (event) => {
             if (event.source === window && event?.data?.direction === "from-page-script") {
                 listener(event.data.message);
@@ -46,19 +43,11 @@ const browser2 = typeof(browser) !== "undefined" ? browser : chrome;
         });
     };
 
-    const pageScriptRPC = new RPC(postMessage2, listenMessage2);
-
-    pageScriptRPC.onCall("*", async (name: string, ...args: any[]) => {
-        console.log("content-script received call from page-script", name, args);
-        const response = await backgroundScriptRPC.call(name, args);
-        return response;
+    listenMessageFromBg( (message: any) => {
+        postMessageToPage(message);
     });
 
-    backgroundScriptRPC.onCall("*", async (name: string, ...args: any[]) => {
-        console.log("content-script received call from background-script", name, args);
-        const response = await pageScriptRPC.call(name, args);
-        return response;
+    listenMessageFromPage( (message: any) => {
+        postMessageToBg(message);
     });
-
-    pageScriptRPC.call("init");
 })();
