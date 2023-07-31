@@ -31,7 +31,20 @@ async function main() {
 
     const rpc = new RPC(postMessage, listenMessage);
 
-    const tabId = (await browser2.tabs.query({active: true, currentWindow: true}))[0].id;
+    let tabId;
+
+    if (typeof(browser) !== "undefined") {
+        tabId = (await browser.tabs.query({active: true, currentWindow: true}))[0].id;
+    }
+    else {
+        const p = new Promise( (resolve) => {
+            chrome.tabs.query({active: true, currentWindow: true}, tab => {
+                resolve(tab.id);
+            });
+        });
+
+        tabId = await p;
+    }
 
     const mainComponent = riot.component(PopupMain)(popupElement, {rpc, tabId});
 
