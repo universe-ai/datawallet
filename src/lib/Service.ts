@@ -42,7 +42,7 @@ export class Service {
             };
         });
 
-        rpc.call("init");
+        csRPCKM.call("active");
     }
 
     public registerPopupRPC(rpc: any) {
