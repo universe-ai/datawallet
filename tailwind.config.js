@@ -1,8 +1,9 @@
 module.exports = {
     content: [
+        "./src/*.{html,js,riot}",
         //"./src/*.{html,js}",
-        "./dist/*.{html,js}",
-        "./index.html"
+        //"./dist/*.{html,js}",
+        //"./index.html"
     ],
 
     theme: {
