@@ -4,7 +4,7 @@
     "description": "Official UniverseAI Data Wallet",
     "private": false,
     "scripts": {
-        "build": "rm -rf ./dist ./build && npm run tsc && npm run build-background-script && npm run build-content-script && npm run build-popup && npm run copy-extension",
+        "build": "rm -rf ./dist/* ./build && npm run tsc && npm run build-background-script && npm run build-content-script && npm run build-popup && npm run copy-extension",
         "tsc": "./node_modules/.bin/tsc",
         "build-background-script": "./node_modules/.bin/browserify --s module -i ./node_modules/universeai/build/src/datastreamer/FileStreamWriter.js -i ./node_modules/universeai/build/src/datastreamer/FileStreamReader.js -i sqlite3 -i postgresql-client ./node_modules/universeai/build/src/keymanager/RPC.js -o ./build/lib/RPC.js && ./node_modules/.bin/browserify --s module -i ./node_modules/universeai/build/src/datastreamer/FileStreamWriter.js -i ./node_modules/universeai/build/src/datastreamer/FileStreamReader.js -i sqlite3 -i postgresql-client ./build/extension/background-script.js -o ./dist/background-script.js && cp ./node_modules/universeai/build/src/datamodel/decoder/thread-browser.js ./dist",
         "build-content-script": "./node_modules/.bin/browserify --s module  -i ./node_modules/universeai/build/src/datastreamer/FileStreamWriter.js -i ./node_modules/universeai/build/src/datastreamer/FileStreamReader.js -i sqlite3 -i postgresql-client ./build/extension/content-script.js -o ./dist/content-script.js",
@@ -17,11 +17,11 @@
         "type": "git",
         "url": "git+https://github.com/universe-ai/datawallet"
     },
-    "author": "UniverseAI Foundation",
+    "author": "The UniverseAI Foundation",
     "bugs": {
         "url": "https://github.com/universe-ai/datawallet/issues"
     },
-    "homepage": "https://universe.ai/datawallet",
+    "homepage": "https://universe.ai/docs/datawallet",
     "devDependencies": {
         "@riotjs/compiler": "^6.1.3",
         "@riotjs/webpack-loader": "^6.0.0",
