@@ -8,10 +8,11 @@ import {
 
 declare const browser: any;
 declare const chrome: any;
+declare const localStorage: Storage;
 
 const browser2 = typeof(browser) !== "undefined" ? browser : chrome;
 
-const service = new Service(browser2);
+const service = new Service(browser2, localStorage);
 
 function connected(port: any) {
     if (port.name === "from-popup") {

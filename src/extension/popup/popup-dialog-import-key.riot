@@ -1,0 +1,59 @@
+<popup-dialog-import-key>
+    <dialog>
+        Import key
+      <form method="dialog">
+        <p>
+          <label for="publicKey">Public Key:</label>
+          <input id="publicKey" />
+
+          <label for="secretKey">Secret Key</label>
+          <input id="secretKey" />
+        </p>
+        <div>
+          <button value="cancel" id="cancel" type="cancel">Cancel</button>
+          <button value="import" type="submit">Import</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+        let thisRef;
+        let dialog;
+
+        export default {
+            onMounted(props, state) {
+                thisRef = this;
+                dialog = thisRef.$("dialog");
+                dialog.addEventListener("close", function() {
+                    if (dialog.returnValue === "import") {
+                        thisRef.state.resolve({
+                            publicKey: dialog.querySelector("#publicKey").value,
+                            secretKey: dialog.querySelector("#secretKey").value,
+                        });
+                    }
+                    else {
+                        thisRef.state.resolve();
+                    }
+
+                    thisRef.unmount();
+                });
+            },
+            async showModal() {
+                dialog.showModal();
+
+                return new Promise( function(resolve, reject) {
+                    thisRef.update({
+                        resolve,
+                        reject
+                    });
+                });
+            },
+        }
+    </script>
+    <style>
+        button {
+            display: block;
+            border: solid 1px black;
+        }
+    </style>
+</popup-dialog-import-key>

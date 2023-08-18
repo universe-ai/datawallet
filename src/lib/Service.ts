@@ -1,31 +1,33 @@
 import {
     RPC,
     KeyManager,
+    Node,
 } from "universeai";
 
-export type TabState = {
-    activated: boolean,
-    title: string,
-    url: string,
-};
+import {
+    WalletKeyPair,
+    TabsState,
+    Vault,
+    Vaults,
+} from "./types";
 
-export type TabsState = {
-    [tabId: string]: TabState,
-};
-
-const keyPair = {
-    publicKey: Buffer.from("60a0206c38c686dd6792e1f0279dd4084a37f85eec4bb6eab8c2721a636da170", "hex"),
-    secretKey: Buffer.from("8be83aa067ebe07ea95e7b8ec4c0e70c3d19a7f696d81877b8370e4ec83deffb60a0206c38c686dd6792e1f0279dd4084a37f85eec4bb6eab8c2721a636da170", "hex"),
-};
+declare const browser: any;
+declare const chrome: any;
 
 export class Service {
     protected tabsState: TabsState = {};
     protected csRPC?: RPC;
     protected popupRPC?: RPC;
     protected browser: any;
+    protected authRequests: Function[] = [];
+    protected vaults: Vaults = {};
+    protected storageAPI: Storage;
 
-    constructor(browser: any) {
+    constructor(browser: any, storageAPI: Storage) {
         this.browser = browser;
+        this.storageAPI = storageAPI;
+
+        this.loadVaults();
     }
 
     public registerContentScriptRPC(rpc: any) {
@@ -36,9 +38,25 @@ export class Service {
         const keyManager = new KeyManager(csRPCKM);
 
         keyManager.onAuth( async () => {
-            // TODO: pass it on to popup
+            const tabId = await this.getTabId();
+
+            let resolve: Function | undefined;
+
+            this.authRequests.push( (keyPairs?: WalletKeyPair[]) => { resolve && resolve(keyPairs) });
+            const authRequestId = this.authRequests.length - 1;
+
+            const p = new Promise( (resolveInner, reject) => {
+                resolve = resolveInner;
+
+                this.tabsState[tabId].authRequestId = authRequestId;
+            });
+
+            const keyPairs = (await p) as WalletKeyPair[] | undefined;
+            const error = keyPairs === undefined ? "Auth denied" : undefined;
+
             return {
-                keyPairs: [keyPair],
+                keyPairs,
+                error,
             };
         });
 
@@ -48,42 +66,122 @@ export class Service {
     public registerPopupRPC(rpc: any) {
         this.popupRPC = rpc;
 
-        rpc.onCall("activateTab", this.activateTab);
-
+        rpc.onCall("registerTab", this.registerTab);
         rpc.onCall("getState", this.getState);
+        rpc.onCall("acceptAuth", this.acceptAuth);
+        rpc.onCall("denyAuth", this.denyAuth);
+        rpc.onCall("getVaults", this.getVaults);
+        rpc.onCall("saveVault", this.saveVault);
+        rpc.onCall("newKeyPair", this.newKeyPair);
     }
 
-    /**
-     * Init current tab state if not already inited, and return state for all tabs.
-     *
-     */
-    protected getState = async (tabId: number): Promise<TabsState> => {
-        if (!this.tabsState[tabId]) {
-            this.tabsState[tabId] = {
-                activated: false,
-                title: "",
-                url: "",
-            };
+    protected async loadVaults() {
+        this.vaults = JSON.parse((await this.storageAPI.getItem("vaults")) ?? "{}");
+    }
+
+    protected getVaults = async (): Promise<Vaults> => {
+        return this.vaults;
+    };
+
+    protected saveVault = async (vault: Vault): Promise<boolean> => {
+        try {
+            this.vaults[vault.id] = vault;
+            await this.storageAPI.setItem("vaults", JSON.stringify(this.vaults));
         }
-        else {
-            if (this.tabsState[tabId].activated) {
-                // Always reinsert the content-script in case the tab has been reloaded.
-                this.browser.tabs.executeScript({file: "/content-script.js"});
-            }
+        catch(e) {
+            console.error("Could not store vault", e);
+            return false;
         }
 
+        return true;
+    };
+
+    protected denyAuth = (tabId: number) => {
+        const authRequestId = this.tabsState[tabId].authRequestId;
+
+        if (authRequestId === undefined) {
+            return;
+        }
+
+        this.tabsState[tabId].authRequestId = undefined;
+
+        const resolve = this.authRequests[authRequestId];
+        resolve && resolve();
+    };
+
+    protected acceptAuth = (tabId: number, keyPairs: WalletKeyPair[]) => {
+        const authRequestId = this.tabsState[tabId].authRequestId;
+
+        if (authRequestId === undefined) {
+            return;
+        }
+
+        this.tabsState[tabId].authRequestId = undefined;
+
+        const resolve = this.authRequests[authRequestId];
+        resolve && resolve(keyPairs);
+
+        this.tabsState[tabId].authed = true;
+    };
+
+    protected getState = async (tabId: number): Promise<TabsState> => {
         return this.tabsState;
     };
 
-    protected activateTab = async (tabId: number): Promise<TabsState | undefined> => {
+    protected registerTab = async (tabId: number) => {
+        if (!this.tabsState[tabId]) {
+            this.tabsState[tabId] = {
+                activated: false,
+                authed: false,
+                authRequestId: undefined,
+                title: `${tabId}`,
+                url: window.location.href,
+            };
+        }
+
         try {
-            this.tabsState[tabId].activated = true;
-            this.browser.tabs.executeScript({file: "/content-script.js"});
-            return this.tabsState;
+            await this.browser.tabs.executeScript({file: "/content-script.js"});
         }
         catch(e) {
-            console.error(e);
-            return undefined;
+            console.debug("Can't interact with tab", e);
+            return;
         }
+
+        this.tabsState[tabId].activated = true;
+    };
+
+    protected async getTabId(): Promise<number> {
+        let tabId;
+
+        if (typeof(browser) !== "undefined") {
+            tabId = (await browser.tabs.query({active: true, currentWindow: true}))[0].id;
+        }
+        else {
+            const p = new Promise( (resolve) => {
+                chrome.tabs.query({active: true, currentWindow: true}, (tab: any) => {
+                    resolve(tab.id);
+                });
+            });
+
+            tabId = await p;
+        }
+
+        return tabId;
+    }
+
+    protected newKeyPair = async (): Promise<WalletKeyPair> => {
+        const keyPair = Node.GenKeyPair();
+
+        const publicKey: number[] = [];
+        const secretKey: number[] = [];
+
+        keyPair.publicKey.forEach(i => publicKey.push(i) );
+        keyPair.secretKey.forEach(i => secretKey.push(i) );
+
+        return {
+            publicKey,
+            secretKey,
+            crypto: "ed25519",
+        };
     };
 }

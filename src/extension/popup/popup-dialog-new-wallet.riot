@@ -1,0 +1,65 @@
+<popup-dialog-new-wallet>
+    <dialog>
+      <form method="dialog">
+        <p>
+          <label for="title">Wallet title:</label>
+          <input id="title"/>
+
+          <label for="password">Wallet password:</label>
+          <input id="password" type="password"/>
+        </p>
+        <div>
+          <button value="cancel" id="cancel" type="cancel">Cancel</button>
+          <button value="create" type="submit">Create</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+        let thisRef;
+        let dialog;
+
+        export default {
+            onMounted(props, state) {
+                thisRef = this;
+                dialog = thisRef.$("dialog");
+
+                dialog.addEventListener("close", function() {
+                    if (dialog.returnValue === "create") {
+                        thisRef.state.resolve({
+                            password: dialog.querySelector("#password").value,
+                            title: dialog.querySelector("#title").value,
+                        });
+                    }
+                    else {
+                        thisRef.state.resolve();
+                    }
+
+                    thisRef.unmount();
+                });
+            },
+            async showModal() {
+                dialog.showModal();
+
+                return new Promise( function(resolve, reject) {
+                    thisRef.update({
+                        resolve,
+                        reject
+                    });
+                });
+            },
+        }
+    </script>
+    <style>
+        dialog {
+            display: block;
+            margin: 6px;
+            width: 100%;
+            height: 100%;
+        }
+        button {
+            display: block;
+            border: solid 1px black;
+        }
+    </style>
+</popup-dialog-new-wallet>

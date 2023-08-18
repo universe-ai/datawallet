@@ -1,55 +1,85 @@
 <popup-main>
     <div id="mainContent">
-        <div if={state.tabsState}>
-            <div if={state.tabsState[props.tabId]?.activated}>
-                Tab is activated
-            </div>
-            <div if={!state.tabsState[props.tabId]?.activated}>
-                Tab has not been activated
-                <button onclick={activateTab}>Activate tab now</button>
-            </div>
-        </div?
+        <div>
+            <a href="#" onclick={ toggleMenu }> MENU </a>
+        </div>
+
+        <div id="menu" if={state.menu.show}>
+            <a href="#" onclick={ menuConnections }
+                class="{addClass("active", state.menu.current==="connections")}">
+                Connections</a>
+
+            <a href="#" onclick={ menuWallets }
+                class="{addClass("active", state.menu.current==="wallets")}">
+                Wallets</a>
+        </div>
+
+        <popup-connection if={state.menu.current==="connection"} rpc={props.rpc} tabId={props.tabId}></popup-connection>
+        <popup-wallets if={state.menu.current==="wallets"} rpc={props.rpc}></popup-wallets>
     </div>
 
     <script>
         import * as riot from "riot";
 
+        /**
+         * @param props {rpc, tabId}
+         */
         export default {
             onBeforeMount(props, state) {
                 this.state = {
-                    tabsState: {},
+                    menu: {
+                        show: false,
+                        current: "connection",
+                    },
                 };
             },
-            async activateTab(e) {
+            menuWallets(e) {
+                this.update({
+                    menu: {...this.state.menu, show: false, current: "wallets"},
+                });
+            },
+            menuConnections(e) {
+                this.update({
+                    menu: {...this.state.menu, show: false, current: "connection"},
+                });
+            },
+            toggleMenu(e) {
                 e.preventDefault();
 
-                const tabsState = await this.props.rpc.call("activateTab", [this.props.tabId]);
-
-                if (tabsState) {
-                    this.update({
-                        tabsState,
-                    });
-                }
-                else {
-                    console.error("could not activate tab");
-                }
+                this.update({
+                    menu: {...this.state.menu, show: !this.state.menu.show},
+                });
             },
+            addClass(className, isActive) {
+                return isActive ? className : "";
+            }
         }
     </script>
     <style>
-        popup-main {
-            display: block;
-            min-width: 150;
-            min-height: 200px;
-        };
         #mainContent {
             display: block;
-            float: left;
-            margin-left: 10px;
+            min-width: 640px;
+            min-height: 480px;
+            background-color: #9999aa;
+            border: 1px solid #333377;
+            padding: 3px;
         }
         button {
             display: block;
             border: solid 1px black;
+        }
+        #menu {
+            display: block;
+            min-width: 150px;
+            min-height: 80px;
+        }
+        #menu a {
+            display: block;
+            float: left;
+            color: blue;
+        }
+        #menu a.active {
+            color: purple;
         }
         .non-visible {
             visibility: hidden;

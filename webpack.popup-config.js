@@ -3,7 +3,7 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
     node: {
-        global: false
+        global: true
     },
     mode: "production",
     entry: "./src/extension/popup/popup.js",

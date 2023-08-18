@@ -3,6 +3,11 @@ const {RPC} = require("../../../build/lib/RPC.js");
 import * as riot from "riot";
 
 import PopupMain from "./popup-main.riot";
+import PopupConnection from "./popup-connection.riot";
+import PopupWallets from "./popup-wallets.riot";
+
+riot.register("popup-connection", PopupConnection);
+riot.register("popup-wallets", PopupWallets);
 
 import "./popup.css";
 
@@ -31,6 +36,15 @@ async function main() {
 
     const rpc = new RPC(postMessage, listenMessage);
 
+    const tabId = await getTabId();
+
+    // Always auto-activate the tab when opened.
+    await rpc.call("registerTab", [tabId]);
+
+    const mainComponent = riot.component(PopupMain)(popupElement, {rpc, tabId});
+}
+
+async function getTabId() {
     let tabId;
 
     if (typeof(browser) !== "undefined") {
@@ -46,11 +60,7 @@ async function main() {
         tabId = await p;
     }
 
-    const mainComponent = riot.component(PopupMain)(popupElement, {rpc, tabId});
-
-    const tabsState = await rpc.call("getState", [tabId]);
-
-    mainComponent.update({tabsState});
+    return tabId;
 }
 
 main();

@@ -1,0 +1,137 @@
+<popup-connection>
+    <div id="tabsContent">
+        Current tab: {props.tabId}
+        <div if={state.tabState.activated}>
+            <div if={!state.tabState.authed && state.tabState.authRequestId === undefined}>
+                Tab is not authed.
+                Send auth request from browser application.
+            </div>
+            <div if={state.tabState.authed}>
+                Tab is authed
+            </div>
+            <div if={state.tabState.authRequestId !== undefined}>
+                Tab is requiring auth. <br />
+                Choose wallet to auth with:
+                <select id="authVault">
+                    <option each={vault in state.vaults} value={vault.id}>
+                        {vault.title} ({vault.id})
+                    </option>
+                </select>
+
+                <button onclick={ acceptAuth }>Accept auth</button>
+
+                <hr />
+                <button onclick={ denyAuth }>Deny auth</button>
+            </div>
+        </div>
+        <div if={!state.tabState.activated}>
+            <p> This tab cannot be used with the DataWallet </p>
+        </div>
+    </div>
+
+    <script>
+        import {Wallet} from "../../../build/lib/Wallet.js";
+        import PopupDialogUnlockVault from "./popup-dialog-unlock-vault.riot";
+        import * as riot from "riot";
+
+        /**
+         * @param props {rpc, tabId}
+         */
+        export default {
+            onBeforeMount(props, state) {
+                this.state = {
+                    tabState: {},
+                    vaults: [],
+                };
+
+                this.updateState();
+
+                this.getVaults();
+            },
+            getVaults() {
+                const tabsState = this.props.rpc.call("getVaults").then( vaults => {
+                    this.update({
+                        vaults: Object.values(vaults),
+                    });
+                });
+            },
+            updateState() {
+                const tabsState = this.props.rpc.call("getState", [this.props.tabId]).then( tabsState => {
+                    const tabState = tabsState[this.props.tabId] ?? {};
+
+                    this.update({
+                        tabState,
+                    });
+                });
+            },
+            async acceptAuth(e) {
+                e.preventDefault();
+
+                const dd = document.getElementById("authVault");
+                const id = dd.value;
+
+                const vault = this.state.vaults.find( vault => vault.id === id);
+
+                if (!vault) {
+                    return;
+                }
+
+                const unlockModal = riot.component(PopupDialogUnlockVault)(this.root.appendChild(document.createElement("DIV")), {});
+
+                const unlockRet = await unlockModal.showModal();
+
+                if (!unlockRet) {
+                    return;
+                }
+
+                const wallet = new Wallet(unlockRet.password);
+
+                try {
+                    wallet.load(vault);
+                }
+                catch(e) {
+                    console.error("Could not open wallet");
+                    this.update({error: "Could not open wallet"});
+                    return;
+                }
+
+                await this.props.rpc.call("acceptAuth", [this.props.tabId, wallet.getKeyPairs()]);
+
+                this.updateState();
+            },
+            denyAuth(e) {
+                e.preventDefault();
+
+                this.props.rpc.call("denyAuth", [this.props.tabId]);
+
+                this.updateState();
+            },
+        }
+    </script>
+    <style>
+        #tabsContent {
+            display: block;
+        }
+        .tabList {
+            width: 100%;
+            height: 30px;
+            display: block;
+            background-color: #efefef;
+        }
+        .tabList div {
+            float: left;
+            display: block;
+            border: 1px solid black;
+        }
+        .tabList .active {
+            background-color: 33efef;
+        }
+        button {
+            display: block;
+            border: solid 1px black;
+        }
+        .non-visible {
+            visibility: hidden;
+        }
+    </style>
+</popup-connection>

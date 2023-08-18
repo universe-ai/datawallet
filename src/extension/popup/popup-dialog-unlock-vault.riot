@@ -1,0 +1,55 @@
+<popup-dialog-unlock-vault>
+    <dialog>
+        <p>Unlock wallet<p>
+      <form method="dialog">
+        <p>
+          <label for="password">Wallet password:</label>
+          <input id="password" type="password"/>
+        </p>
+        <div>
+          <button value="cancel" id="cancel" type="cancel">Cancel</button>
+          <button value="unlock" type="submit">Unlock</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+        let thisRef;
+        let dialog;
+
+        export default {
+            onMounted(props, state) {
+                thisRef = this;
+                dialog = thisRef.$("dialog");
+                dialog.addEventListener("close", function() {
+                    if (dialog.returnValue === "unlock") {
+                        thisRef.state.resolve({
+                            password: dialog.querySelector("#password").value,
+                        });
+                    }
+                    else {
+                        thisRef.state.resolve();
+                    }
+
+                    thisRef.unmount();
+                });
+            },
+            async showModal() {
+                dialog.showModal();
+
+                return new Promise( function(resolve, reject) {
+                    thisRef.update({
+                        resolve,
+                        reject
+                    });
+                });
+            },
+        }
+    </script>
+    <style>
+        button {
+            display: block;
+            border: solid 1px black;
+        }
+    </style>
+</popup-dialog-unlock-vault>

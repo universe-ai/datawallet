@@ -1,0 +1,172 @@
+<popup-wallets>
+    <div id="#wallets">
+        <div each={vault in state.vaults}>
+            Wallet: {vault.title} (ID: {vault.id}) <br />
+
+            <button
+                id="manageWallet_{vault.id}"
+                onclick={ manageWallet }>
+                Manage Wallet
+            </button>
+        </div>
+
+        <button
+            onclick={ newVault }>
+            Create New Data Wallet
+        </button>
+    </div>
+
+    <script>
+        import {Wallet} from "../../../build/lib/Wallet.js";
+        import * as riot from "riot";
+
+        import PopupDialogUnlockVault from "./popup-dialog-unlock-vault.riot";
+        import PopupDialogNewWallet from "./popup-dialog-new-wallet.riot";
+        import PopupDialogManageWallet from "./popup-dialog-manage-wallet.riot";
+
+        export default {
+            onBeforeMount(props, state) {
+                this.state = {
+                    vaults: [],
+                };
+
+                this.getVaults();
+            },
+            getVaults() {
+                const tabsState = this.props.rpc.call("getVaults").then( vaults => {
+                    this.update({
+                        vaults: Object.values(vaults),
+                    });
+                });
+            },
+            async manageWallet(e) {
+                e.preventDefault();
+
+                const id = e.target.id.split('_')[1];
+                const vault = this.state.vaults.find( vault => vault.id === id);
+
+                if (!vault) {
+                    return;
+                }
+
+                const unlockModal = riot.component(PopupDialogUnlockVault)(this.root.appendChild(document.createElement("DIV")), {});
+
+                const unlockRet = await unlockModal.showModal();
+
+                if (!unlockRet) {
+                    return;
+                }
+
+                const wallet = new Wallet(unlockRet.password);
+
+                try {
+                    wallet.load(vault);
+                }
+                catch(e) {
+                    console.error("Could not open wallet");
+                    this.update({error: "Could not open wallet"});
+                    return;
+                }
+
+                const manageModal = riot.component(PopupDialogManageWallet)(this.root.appendChild(document.createElement("DIV")), {wallet, rpc: this.props.rpc});
+
+                const manageRet = await manageModal.showModal();
+
+                if (manageRet?.wallet) {
+                    const vault = wallet.export();
+                    const result = await this.props.rpc.call("saveVault", [vault]);
+                    this.getVaults();
+                }
+            },
+            async newVault(e) {
+                e.preventDefault();
+
+                const m = riot.component(PopupDialogNewWallet)(this.root.appendChild(document.createElement("DIV")), {});
+
+                const ret = await m.showModal();
+
+                if (ret) {
+                    const password = ret.password;
+                    const title = ret.title;
+                    const rv = new Uint8Array(8);
+                    self.crypto.getRandomValues(rv);
+                    const id = rv.toString().split(",").map( n => parseInt(n).toString(16).padStart(2, "0") ).join("");
+
+                    if (this.state.vaults[id]) {
+                        throw new Error("Reuse of ID error.");
+                    }
+
+                    const wallet = new Wallet(password, title, id);
+
+                    const vault = wallet.export();
+
+                    const result = await this.props.rpc.call("saveVault", [vault]);
+
+                    if (!result) {
+                        throw new Error("Could not save vault");
+                    }
+
+                    this.getVaults();
+                }
+            },
+
+
+
+
+
+
+
+
+
+
+            async unlockDialog(e) {
+                e.preventDefault();
+                const index = Number(e.target.id.split('_')[2]);
+
+                const m = riot.component(AppDialogUnlockVault)(this.root.appendChild(document.createElement("DIV")), {});
+
+                const ret = await m.showModal();
+
+
+                if (ret) {
+                    const password = ret.password;
+
+                    try {
+                        const wallet = await this.props.app.getVaultManager().unlockWallet(index, password);
+                        this.update({
+                            vaults: this.props.app.getVaultManager().getVaults(),
+                        });
+                    }
+                    catch(e) {
+                        this.showError(e);
+                        return;
+                    }
+                }
+            },
+            lock(e) {
+                e.preventDefault();
+
+                const index = Number(e.target.id.split('_')[2]);
+                this.props.app.getVaultManager().lockWallet(index);
+                this.update({
+                    vaults: this.props.app.getVaultManager().getVaults(),
+                });
+            },
+            showError(e) {
+                this.update({
+                    error: e.message,
+                });
+            }
+        }
+    </script>
+    <style>
+        #wallets {
+            display: block;
+            overflow-y: scroll;
+        }
+        button {
+            display: block;
+            border: solid 1px black;
+        }
+    </style>
+</popup-wallets>

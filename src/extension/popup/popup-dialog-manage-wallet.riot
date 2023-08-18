@@ -1,0 +1,187 @@
+<popup-dialog-managet-wallet>
+    <dialog>
+      <form method="dialog">
+            <div>
+                <p> Wallet: {state.title} (ID: {state.id})</p>
+            </div>
+            <div each={(keyPair, index) in state.keyPairs}>
+                <div class="keyPair">
+                    <div
+                        title="{index===0?"First keypair is also the keypair used for handshake":""}"
+                        class="{index===0?"handshakeKey":""}" >
+                        <p>Public key: {formatHex(keyPair.publicKey)}</p>
+                        <p>Secret key: {formatHex(keyPair.secretKey)}</p>
+                    </div>
+
+                    <button
+                        id="up_vaultIndex_{index}"
+                        onclick={up}
+                        disabled={index===0}>
+                        Move UP
+                    </button>
+                    <button
+                        id="down_vaultIndex_{index}"
+                        onclick={down}
+                        disabled={index===state.keyPairs.length - 1}>
+                        Move DOWN
+                    </button>
+                    <button
+                        id="delete_vaultIndex_{index}"
+                        onclick={deleteKeyPair}>
+                        DELETE
+                    </button>
+                </div>
+            </div>
+
+            <button onclick={generateKeyPair}>Generate new Keypair</button>
+            <button onclick={importDialog}>Import Keypair</button>
+
+            <button onclick={save}>Save</button>
+            <button onclick={cancel}>Cancel</button>
+      </form>
+    </dialog>
+
+    <script>
+        import * as riot from "riot";
+
+        import PopupDialogImportKey from "./popup-dialog-import-key.riot";
+
+        let dialog;
+
+        export default {
+            onBeforeMount(props, state) {
+                this.state = {
+                    keyPairs: this.props.wallet.getKeyPairs(),
+                    title: this.props.wallet.getTitle(),
+                    id: this.props.wallet.getId(),
+                };
+            },
+            onMounted(props, state) {
+                dialog = this.$("dialog");
+            },
+            formatHex(integers) {
+                return integers.map( i => i.toString(16).padStart(2, "0") ).join("");
+            },
+            async showModal() {
+                dialog.showModal();
+
+                return new Promise( (resolve, reject) => {
+                    this.update({
+                        resolve,
+                        reject
+                    });
+                });
+            },
+            async generateKeyPair(e) {
+                e.preventDefault();
+
+                const keyPair = await this.props.rpc.call("newKeyPair");
+
+                this.update({
+                    keyPairs: [...this.state.keyPairs, keyPair],
+                });
+            },
+            deleteKeyPair(e) {
+                e.preventDefault();
+
+                const index = Number(e.target.id.split('_')[2]);
+
+                const keyPairs = this.state.keyPairs.slice();
+                keyPairs.splice(index, 1);
+
+                this.update({
+                    keyPairs,
+                });
+            },
+            up(e) {
+                e.preventDefault();
+
+                const index = Number(e.target.id.split('_')[2]);
+
+                const keyPairs = this.state.keyPairs.slice();
+                const keyPair = keyPairs.splice(index, 1)[0];
+                keyPairs.splice(index-1, 0, keyPair);
+
+                this.update({
+                    keyPairs,
+                });
+            },
+            down(e) {
+                e.preventDefault();
+
+                const index = Number(e.target.id.split('_')[2]);
+
+                const keyPairs = this.state.keyPairs.slice();
+                const keyPair = keyPairs.splice(index, 1)[0];
+                keyPairs.splice(index+1, 0, keyPair);
+
+                this.update({
+                    keyPairs,
+                });
+            },
+            async importDialog(e) {
+                e.preventDefault();
+
+                const m = riot.component(PopupDialogImportKey)(this.root.appendChild(document.createElement("DIV")), {});
+
+                const ret = await m.showModal();
+
+                if (ret) {
+                    try {
+                        const publicKey = ret.publicKey.match(/../g).map(s => parseInt(s, 16));
+                        const secretKey = ret.secretKey.match(/../g).map(s => parseInt(s, 16));
+
+                        const keyPair = {publicKey, secretKey, crypto: "ed25519"};
+
+                        this.update({
+                            keyPairs: [...this.state.keyPairs, keyPair],
+                        });
+                    }
+                    catch(e) {
+                        console.error(`Could not import key: ${e}`);
+                        return;
+                    }
+                }
+            },
+            cancel(e) {
+                e.preventDefault();
+
+                this.state.resolve();
+
+                this.unmount();
+            },
+            save(e) {
+                e.preventDefault();
+
+                const title = this.state.title;
+
+                if (!title) {
+                    console.error("Title must be set");
+                    return;
+                }
+
+                const wallet = this.props.wallet;
+
+                wallet.setKeyPairs(this.state.keyPairs);
+                wallet.setTitle(title);
+
+                this.state.resolve({wallet});
+
+                this.unmount();
+            },
+        }
+    </script>
+    <style>
+        .keyPair {
+            display: block;
+            background-color: gray;
+        }
+        .handshakeKey {
+            background-color: green;
+        }
+        button {
+            display: block;
+            border: solid 1px black;
+        }
+    </style>
+</popup-dialog-managet-wallet>

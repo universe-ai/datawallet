@@ -10,14 +10,11 @@ const browser2 = typeof(browser) !== "undefined" ? browser : chrome;
 (function() {
     //@ts-ignore
     if (window.hasRun) {
-        console.log("content script already loaded");
         return;
     }
 
     //@ts-ignore
     window.hasRun = true;
-
-    console.log("content-script loaded.");
 
     const port = browser2.runtime.connect({name: "from-content-script"});
 
