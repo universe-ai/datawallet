@@ -3,8 +3,8 @@ import {
 } from "universeai";
 
 import {
-    Service,
-} from "../lib/Service";
+    BackgroundService,
+} from "../lib/BackgroundService";
 
 declare const browser: any;
 declare const chrome: any;
@@ -12,7 +12,7 @@ declare const localStorage: Storage;
 
 const browser2 = typeof(browser) !== "undefined" ? browser : chrome;
 
-const service = new Service(browser2, localStorage);
+const service = new BackgroundService(browser2, localStorage);
 
 function connected(port: any) {
     if (port.name === "from-popup") {

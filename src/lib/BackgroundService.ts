@@ -14,7 +14,7 @@ import {
 declare const browser: any;
 declare const chrome: any;
 
-export class Service {
+export class BackgroundService {
     protected tabsState: TabsState = {};
     protected csRPC?: RPC;
     protected popupRPC?: RPC;
