@@ -16,12 +16,12 @@ declare const chrome: any;
 
 export class BackgroundService {
     protected tabsState: TabsState = {};
-    protected csRPC?: RPC;
     protected popupRPC?: RPC;
     protected browser: any;
     protected authRequests: Function[] = [];
     protected vaults: Vaults = {};
     protected storageAPI: Storage;
+    protected keyManagers: {[rpcId: string]: KeyManager} = {};
 
     constructor(browser: any, storageAPI: Storage) {
         this.browser = browser;
@@ -31,11 +31,11 @@ export class BackgroundService {
     }
 
     public registerContentScriptRPC(rpc: any) {
-        this.csRPC = rpc;
-
         const csRPCKM = rpc.clone("keyManager");
 
         const keyManager = new KeyManager(csRPCKM);
+
+        this.keyManagers[rpc.getId()] = keyManager;
 
         keyManager.onAuth( async () => {
             const tabId = await this.getTabId();
@@ -61,6 +61,14 @@ export class BackgroundService {
         });
 
         csRPCKM.call("active");
+    }
+
+    public unregisterContentScriptRPC(rpc: any) {
+        const keyManager = this.keyManagers[rpc.getId()];
+
+        keyManager?.close();
+
+        delete this.keyManagers[rpc.getId()];
     }
 
     public registerPopupRPC(rpc: any) {

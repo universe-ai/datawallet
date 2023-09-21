@@ -35,6 +35,11 @@ function connected(port: any) {
             port.postMessage(message);
         };
 
+        port.onDisconnect.addListener( () => {
+            // Closes all resources.
+            service.unregisterContentScriptRPC(rpc);
+        });
+
         const listenMessage = (listener: Function) => {
             port.onMessage.addListener( (message: any) => {
                 listener(message);
