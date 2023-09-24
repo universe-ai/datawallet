@@ -16,9 +16,9 @@ declare const chrome: any;
 
 export class BackgroundService {
     protected tabsState: TabsState = {};
-    protected popupRPC?: RPC;
     protected browser: any;
     protected authRequests: Function[] = [];
+    protected authRequestIdCounter = 0;
     protected vaults: Vaults = {};
     protected storageAPI: Storage;
     protected keyManagers: {[rpcId: string]: KeyManager} = {};
@@ -31,9 +31,7 @@ export class BackgroundService {
     }
 
     public registerContentScriptRPC(rpc: any) {
-        const csRPCKM = rpc.clone("keyManager");
-
-        const keyManager = new KeyManager(csRPCKM);
+        const keyManager = new KeyManager(rpc);
 
         this.keyManagers[rpc.getId()] = keyManager;
 
@@ -42,8 +40,12 @@ export class BackgroundService {
 
             let resolve: Function | undefined;
 
-            this.authRequests.push( (keyPairs?: WalletKeyPair[]) => { resolve && resolve(keyPairs) });
-            const authRequestId = this.authRequests.length - 1;
+            // Resolve any prior auth request as denied.
+            this.denyAuth(tabId);
+
+            this.authRequests[this.authRequestIdCounter] = (keyPairs?: WalletKeyPair[]) => { resolve && resolve(keyPairs) };
+
+            const authRequestId = this.authRequestIdCounter++;
 
             const p = new Promise( (resolveInner, reject) => {
                 resolve = resolveInner;
@@ -59,8 +61,6 @@ export class BackgroundService {
                 error,
             };
         });
-
-        csRPCKM.call("active");
     }
 
     public unregisterContentScriptRPC(rpc: any) {
@@ -69,11 +69,11 @@ export class BackgroundService {
         keyManager?.close();
 
         delete this.keyManagers[rpc.getId()];
+
+        rpc.close();
     }
 
     public registerPopupRPC(rpc: any) {
-        this.popupRPC = rpc;
-
         rpc.onCall("registerTab", this.registerTab);
         rpc.onCall("getState", this.getState);
         rpc.onCall("acceptAuth", this.acceptAuth);
@@ -81,6 +81,10 @@ export class BackgroundService {
         rpc.onCall("getVaults", this.getVaults);
         rpc.onCall("saveVault", this.saveVault);
         rpc.onCall("newKeyPair", this.newKeyPair);
+    }
+
+    public unregisterPopupRPC(rpc: any) {
+        rpc.close();
     }
 
     protected async loadVaults() {
@@ -114,6 +118,9 @@ export class BackgroundService {
         this.tabsState[tabId].authRequestId = undefined;
 
         const resolve = this.authRequests[authRequestId];
+
+        delete this.authRequests[authRequestId];
+
         resolve && resolve();
     };
 
@@ -127,6 +134,9 @@ export class BackgroundService {
         this.tabsState[tabId].authRequestId = undefined;
 
         const resolve = this.authRequests[authRequestId];
+
+        delete this.authRequests[authRequestId];
+
         resolve && resolve(keyPairs);
 
         this.tabsState[tabId].authed = true;

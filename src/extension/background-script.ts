@@ -15,10 +15,17 @@ const browser2 = typeof(browser) !== "undefined" ? browser : chrome;
 const service = new BackgroundService(browser2, localStorage);
 
 function connected(port: any) {
-    if (port.name === "from-popup") {
+    const [portName, rpcId]  = port.name.split("_");
+
+    if (portName === "popup-to-background") {
         const postMessage = (message: any) => {
             port.postMessage(message);
         };
+
+        port.onDisconnect.addListener( () => {
+            // Closes all resources.
+            service.unregisterPopupRPC(rpc);
+        });
 
         const listenMessage = (listener: Function) => {
             port.onMessage.addListener( (message: any) => {
@@ -26,11 +33,11 @@ function connected(port: any) {
             });
         };
 
-        const rpc = new RPC(postMessage, listenMessage);
+        const rpc = new RPC(postMessage, listenMessage, rpcId);
 
         service.registerPopupRPC(rpc);
     }
-    else if (port.name === "from-content-script") {
+    else if (portName === "content-to-background") {
         const postMessage = (message: any) => {
             port.postMessage(message);
         };
@@ -46,10 +53,9 @@ function connected(port: any) {
             });
         };
 
-        const rpc = new RPC(postMessage, listenMessage);
+        const rpc = new RPC(postMessage, listenMessage, rpcId);
 
         service.registerContentScriptRPC(rpc);
-
     }
 }
 

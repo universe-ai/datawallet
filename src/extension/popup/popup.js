@@ -21,8 +21,10 @@ async function main() {
         return;
     }
 
+    const rpcId = "0";  // This is not required to be random from popup.
+
     // Connect to background-script
-    const port = browser2.runtime.connect({ name: "from-popup" });
+    const port = browser2.runtime.connect({ name: `popup-to-background_${rpcId}` });
 
     const postMessage = (message) => {
         port.postMessage(message);
@@ -34,7 +36,7 @@ async function main() {
         });
     };
 
-    const rpc = new RPC(postMessage, listenMessage);
+    const rpc = new RPC(postMessage, listenMessage, rpcId);
 
     const tabId = await getTabId();
 
