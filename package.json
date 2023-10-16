@@ -45,6 +45,6 @@
         "webpack-cli": "^4.9.2"
     },
     "dependencies": {
-        "universeai": "0.6.6"
+        "universeai": "0.7.0"
     }
 }
