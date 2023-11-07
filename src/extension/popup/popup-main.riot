@@ -5,13 +5,15 @@
         </div>
 
         <div id="menu" if={state.menu.show}>
-            <a href="#" onclick={ menuConnections }
-                class="{addClass("active", state.menu.current==="connections")}">
-                Connections</a>
+            <button href="#" onclick={ menuConnections }
+                class="{addClass("active", state.menu.current==="connections")} border-solid">
+                Connections
+            </button>
 
-            <a href="#" onclick={ menuWallets }
+            <button href="#" onclick={ menuWallets }
                 class="{addClass("active", state.menu.current==="wallets")}">
-                Wallets</a>
+                Wallets
+            </button>
         </div>
 
         <popup-connection if={state.menu.current==="connection"} rpc={props.rpc} tabId={props.tabId}></popup-connection>
