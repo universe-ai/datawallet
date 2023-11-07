@@ -1,19 +1,19 @@
 <popup-main>
-    <div id="mainContent">
-        <div>
-            <a href="#" onclick={ toggleMenu }> MENU </a>
-        </div>
+    <div id="mainContent" class="block min-w-[640px] min-h-[480px]">
+        <div id="menu" class="grid grid-cols-2 gap-1">
+            <div class="{state.menu.current==="connection" ? "bg-bakgrundselement text-rubriker" : "bg-rubriker text-lankarhover"}">
+                <button href="#" onclick={ menuConnections }
+                    class="{addClass("active", state.menu.current==="connections")} {state.menu.current==="connection" ? "strong text-lg" : ""}">
+                    Connections
+                </button>
+            </div>
 
-        <div id="menu" if={state.menu.show}>
-            <button href="#" onclick={ menuConnections }
-                class="{addClass("active", state.menu.current==="connections")} border-solid">
-                Connections
-            </button>
-
-            <button href="#" onclick={ menuWallets }
-                class="{addClass("active", state.menu.current==="wallets")}">
-                Wallets
-            </button>
+            <div class="{state.menu.current==="wallets" ? "bg-bakgrundselement text-rubriker" : "bg-rubriker text-lankarhover"}">
+                <button href="#" onclick={ menuWallets }
+                    class="{addClass("active", state.menu.current==="wallets")} {state.menu.current==="wallets" ? "strong text-lg" : ""}">
+                    Wallets
+                </button>
+            </div>
         </div>
 
         <popup-connection if={state.menu.current==="connection"} rpc={props.rpc} tabId={props.tabId}></popup-connection>
@@ -45,20 +45,13 @@
                     menu: {...this.state.menu, show: false, current: "connection"},
                 });
             },
-            toggleMenu(e) {
-                e.preventDefault();
-
-                this.update({
-                    menu: {...this.state.menu, show: !this.state.menu.show},
-                });
-            },
             addClass(className, isActive) {
                 return isActive ? className : "";
             }
         }
     </script>
     <style>
-        #mainContent {
+        /*#mainContent {
             display: block;
             min-width: 640px;
             min-height: 480px;
@@ -82,7 +75,7 @@
         }
         #menu a.active {
             color: purple;
-        }
+        }*/
         .non-visible {
             visibility: hidden;
         }
