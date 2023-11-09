@@ -1,16 +1,16 @@
 <popup-main>
-    <div id="mainContent" class="block min-w-[640px] min-h-[480px]">
+    <div id="mainContent" class="block min-w-[640px] min-h-[480px] bg-bakgrundselement">
         <div id="menu" class="grid grid-cols-2 gap-1">
-            <div class="{state.menu.current==="connection" ? "bg-bakgrundselement text-rubriker" : "bg-rubriker text-lankarhover"}">
+            <div class="{state.menu.current==="connection" ? "bg-bakgrund-3 text-rubriker" : "bg-rubriker text-lankarhover"}">
                 <button href="#" onclick={ menuConnections }
-                    class="{addClass("active", state.menu.current==="connections")} {state.menu.current==="connection" ? "strong text-lg" : ""}">
+                    class="{addClass("active", state.menu.current==="connections")} {state.menu.current==="connection" ? "strong text-lg" : ""} rounded-t-lg">
                     Connections
                 </button>
             </div>
 
-            <div class="{state.menu.current==="wallets" ? "bg-bakgrundselement text-rubriker" : "bg-rubriker text-lankarhover"}">
+            <div class="{state.menu.current==="wallets" ? "bg-bakgrund-3 text-rubriker" : "bg-rubriker text-lankarhover"}">
                 <button href="#" onclick={ menuWallets }
-                    class="{addClass("active", state.menu.current==="wallets")} {state.menu.current==="wallets" ? "strong text-lg" : ""}">
+                    class="{addClass("active", state.menu.current==="wallets")} {state.menu.current==="wallets" ? "strong text-lg" : ""} rounded-t-lg">
                     Wallets
                 </button>
             </div>

@@ -1,5 +1,5 @@
 <popup-connection>
-    <div id="tabsContent">
+    <div id="tabsContent" class="block text-rubriker">
         Current tab: {props.tabId}
         <div if={state.tabState.activated}>
             <div if={!state.tabState.authed && state.tabState.authRequestId === undefined}>
@@ -109,9 +109,9 @@
         }
     </script>
     <style>
-        #tabsContent {
+        /*#tabsContent {
             display: block;
-        }
+        }*/
         .tabList {
             width: 100%;
             height: 30px;
