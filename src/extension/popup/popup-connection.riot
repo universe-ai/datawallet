@@ -1,18 +1,17 @@
 <popup-connection>
     <div id="tabsContent" class="block text-rubriker">
-        Current tab: {props.tabId}
         <div if={state.tabState.activated}>
             <div if={!state.tabState.authed && state.tabState.authRequestId === undefined}>
-                Tab is not authed.
-                Send auth request from browser application.
+                <span class="font-extrabold">{state.tabState.title}</span> tab is not authorized. <br />
+                Send authorization request from browser application to activate the DataWallet.
             </div>
             <div if={state.tabState.authed}>
-                Tab is authed
+                <span class="font-extrabold">{state.tabState.title}</span> tab is authorized.
             </div>
             <div if={state.tabState.authRequestId !== undefined}>
-                Tab is requiring auth. <br />
-                Choose wallet to auth with:
-                <select id="authVault">
+                <span class="font-extrabold">{state.tabState.title}</span> tab is requesting authorization. <br />
+                Choose identity to authorize with:
+                <select id="authVault" class="bg-bakgrund-2">
                     <option each={vault in state.vaults} value={vault.id}>
                         {vault.title} ({vault.id})
                     </option>
@@ -25,7 +24,7 @@
             </div>
         </div>
         <div if={!state.tabState.activated}>
-            <p> This tab cannot be used with the DataWallet </p>
+            <p> <span class="font-extrabold">{state.tabState.title}</span> tab cannot be used with the DataWallet </p>
         </div>
     </div>
 
