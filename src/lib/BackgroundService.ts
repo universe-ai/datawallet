@@ -147,12 +147,14 @@ export class BackgroundService {
     };
 
     protected registerTab = async (tabId: number) => {
+        const tabTitle = await this.getTabTitle();
+
         if (!this.tabsState[tabId]) {
             this.tabsState[tabId] = {
                 activated: false,
                 authed: false,
                 authRequestId: undefined,
-                title: `${tabId}`,
+                title: `${tabTitle}`,
                 url: window.location.href,
             };
         }
@@ -185,6 +187,25 @@ export class BackgroundService {
         }
 
         return tabId;
+    }
+
+    protected async getTabTitle(): Promise<number> {
+        let tabTitle;
+
+        if (typeof(browser) !== "undefined") {
+            tabTitle = (await browser.tabs.query({active: true, currentWindow: true}))[0].title;
+        }
+        else {
+            const p = new Promise( (resolve) => {
+                chrome.tabs.query({active: true, currentWindow: true}, (tab: any) => {
+                    resolve(tab.title);
+                });
+            });
+
+            tabTitle = await p;
+        }
+
+        return tabTitle;
     }
 
     protected newKeyPair = async (): Promise<WalletKeyPair> => {

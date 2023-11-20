@@ -1,5 +1,5 @@
 <popup-wallets>
-    <div id="#wallets">
+    <div id="#wallets" class="block overflow-y-scroll text-rubriker">
         <div each={vault in state.vaults}>
             Wallet: {vault.title} (ID: {vault.id}) <br />
 
@@ -160,10 +160,10 @@
         }
     </script>
     <style>
-        #wallets {
+        /*#wallets {
             display: block;
             overflow-y: scroll;
-        }
+        }*/
         button {
             display: block;
             border: solid 1px black;
