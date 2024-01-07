@@ -6,7 +6,7 @@
     "scripts": {
         "build": "rm -rf ./dist/* ./build && npm run tsc && npm run build-background-script && npm run build-content-script && npm run build-popup && npm run copy-extension",
         "tsc": "./node_modules/.bin/tsc",
-        "build-background-script": "./node_modules/.bin/browserify --s module -i ./node_modules/universeai/build/src/datastreamer/FileStreamWriter.js -i ./node_modules/universeai/build/src/datastreamer/FileStreamReader.js -i sqlite3 -i postgresql-client ./node_modules/universeai/build/src/keymanager/RPC.js -o ./build/lib/RPC.js && ./node_modules/.bin/browserify --s module -i ./node_modules/universeai/build/src/datastreamer/FileStreamWriter.js -i ./node_modules/universeai/build/src/datastreamer/FileStreamReader.js -i sqlite3 -i postgresql-client ./build/extension/background-script.js -o ./dist/background-script.js && cp ./node_modules/universeai/build/src/datamodel/decoder/thread-browser.js ./dist",
+        "build-background-script": "./node_modules/.bin/browserify --s module -i ./node_modules/universeai/build/src/datastreamer/FileStreamWriter.js -i ./node_modules/universeai/build/src/datastreamer/FileStreamReader.js -i sqlite3 -i postgresql-client ./node_modules/universeai/build/src/util/RPC.js -o ./build/lib/RPC.js && ./node_modules/.bin/browserify --s module -i ./node_modules/universeai/build/src/datastreamer/FileStreamWriter.js -i ./node_modules/universeai/build/src/datastreamer/FileStreamReader.js -i sqlite3 -i postgresql-client ./build/extension/background-script.js -o ./dist/background-script.js && cp ./node_modules/universeai/build/src/datamodel/decoder/signatureOffloader-worker-browser.js ./dist",
         "build-content-script": "./node_modules/.bin/browserify --s module  -i ./node_modules/universeai/build/src/datastreamer/FileStreamWriter.js -i ./node_modules/universeai/build/src/datastreamer/FileStreamReader.js -i sqlite3 -i postgresql-client ./build/extension/content-script.js -o ./dist/content-script.js",
         "build-popup": "webpack -c ./webpack.popup-config.js && cp ./src/extension/popup/popup.html ./dist",
         "copy-extension": "cp ./src/extension/*.html ./src/extension/manifest.json ./dist && cp -r ./src/extension/icons ./dist",
@@ -45,6 +45,6 @@
         "webpack-cli": "^4.9.2"
     },
     "dependencies": {
-        "universeai": "0.7.0"
+        "universeai": "0.7.9"
     }
 }

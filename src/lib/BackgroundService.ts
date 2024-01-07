@@ -1,7 +1,7 @@
 import {
     RPC,
     KeyManager,
-    Node,
+    Crypto,
 } from "universeai";
 
 import {
@@ -209,7 +209,7 @@ export class BackgroundService {
     }
 
     protected newKeyPair = async (): Promise<WalletKeyPair> => {
-        const keyPair = Node.GenKeyPair();
+        const keyPair = Crypto.GenKeyPair();
 
         const publicKey: number[] = [];
         const secretKey: number[] = [];
